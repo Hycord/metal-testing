@@ -24,7 +24,6 @@ find_library(METALKIT MetalKit)
 # Include directories
 target_include_directories(application PRIVATE 
     deps/Apple 
-    deps/glfw/include
 )
 
 # Link libraries
@@ -36,7 +35,6 @@ target_link_libraries(application
     "-framework AppKit"
     "-framework MetalKit"
     nlohmann_json::nlohmann_json
-    # glfw
     objc
 )
 
