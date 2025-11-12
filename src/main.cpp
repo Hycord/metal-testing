@@ -1,34 +1,23 @@
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
 #define MTK_PRIVATE_IMPLEMENTATION
 #define CA_PRIVATE_IMPLEMENTATION
 
-#include <iostream>
-
-#include "lib/LogManager/LogManager.h"
-#include "lib/FileReader/FileReader.h"
-
-#include "lib/GLFW/GLFWAdapter.h"
+#include "config.h"
+#include "lib/MetalController/AppDelegate.h"
 
 int main()
 {
 
-    glfwInit();
+    NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow *glfwWindow = glfwCreateWindow(500, 500, "Application", NULL, NULL);
+    AppDelegate controller;
 
-    while (!glfwWindowShouldClose(glfwWindow))
-    {
-        glfwPollEvents();
-    }
+    NS::Application *app = NS::Application::sharedApplication();
+    app->setDelegate(&controller);
+    app->run();
 
-    glfwDestroyWindow(glfwWindow);
-    glfwTerminate();
+    autoreleasePool->release();
 
-    std::cout << "Hello, world!" << std::endl;
     return 0;
 }
