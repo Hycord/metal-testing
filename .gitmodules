@@ -1,6 +1,6 @@
 [submodule "deps/glfw"]
 	path = deps/glfw
-	url = https://github.com/glfw/glfw.git
+	url = git@github.com:glfw/glfw.git
 [submodule "deps/flatjson"]
 	path = deps/flatjson
 	url = git@github.com:niXman/flatjson.git

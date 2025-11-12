@@ -1,20 +1,34 @@
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
+#define NS_PRIVATE_IMPLEMENTATION
+#define MTL_PRIVATE_IMPLEMENTATION
+#define MTK_PRIVATE_IMPLEMENTATION
+#define CA_PRIVATE_IMPLEMENTATION
+
 #include <iostream>
-#include <LogManager.h>
-#include <FileReader.h>
 
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
+#include "lib/LogManager/LogManager.h"
+#include "lib/FileReader/FileReader.h"
 
+#include "lib/GLFW/GLFWAdapter.h"
 
 int main()
 {
 
-    std::string file = ReadFile("data/config.json");
-    json data = json::parse(file);
-    std::string projectVersion = data["version"].get<std::string>();
-    int nested = data["nested"]["data"].get<int>();
+    glfwInit();
 
-    std::cout << nested << std::endl;
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    GLFWwindow *glfwWindow = glfwCreateWindow(500, 500, "Application", NULL, NULL);
 
+    while (!glfwWindowShouldClose(glfwWindow))
+    {
+        glfwPollEvents();
+    }
+
+    glfwDestroyWindow(glfwWindow);
+    glfwTerminate();
+
+    std::cout << "Hello, world!" << std::endl;
     return 0;
 }

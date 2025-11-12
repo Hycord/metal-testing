@@ -61,12 +61,12 @@ setup() {
 configure() {
     cd "$BUILD_DIR" || error "Cannot enter $BUILD_DIR"
     if $VERBOSE; then
-        if ! cmake -DCMAKE_BUILD_TYPE=Debug ..; then
+        if ! cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES="arm64" ..; then
             cd ..
             error "CMake config failed"
         fi
     else
-        if ! cmake -DCMAKE_BUILD_TYPE=Debug .. >/dev/null 2>&1; then
+        if ! cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES="arm64" .. >/dev/null 2>&1; then
             cd ..
             error "CMake config failed"
         fi
