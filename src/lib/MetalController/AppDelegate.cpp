@@ -28,7 +28,7 @@ void AppDelegate::applicationDidFinishLaunching(NS::Notification* notification)
 
     mtkView = MTK::View::alloc()->init(frame, device);
     mtkView->setColorPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm);
-    mtkView->setClearColor(MTL::ClearColor::Make(0.0, 1.0, 0.0, 1.0));
+    mtkView->setClearColor(MTL::ClearColor::Make(0.25, 0.25, 0.25, 1.0));
 
     viewDelegate = new ViewDelegate(device);
     mtkView->setDelegate(viewDelegate);

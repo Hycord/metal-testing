@@ -1,5 +1,17 @@
 #include "FileReader.h"
 #include <fstream>
+std::stringstream ReadFileStream(std::string location)
+{
+    std::ifstream file(location);
+    std::stringstream data;
+
+    if (file.is_open())
+    {
+       data << file.rdbuf();
+    }
+
+    return data;
+};
 
 std::string ReadFile(std::string location)
 {
