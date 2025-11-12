@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+
 int main()
 {
 
@@ -14,6 +15,6 @@ int main()
     int nested = data["nested"]["data"].get<int>();
 
     std::cout << nested << std::endl;
-    
+
     return 0;
 }

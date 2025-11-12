@@ -1,19 +1,14 @@
 #!/bin/bash
 
 # =============================================================================
-# Minimal CMake Build Script
+# Simple CMake Build Script
 # =============================================================================
 
 # Config
 PROJECT_NAME="application"
 BUILD_DIR="build"
-SRC_DIR="src"
-LIB_DIR="lib"
-EXTERNAL_DIR="deps"
 DATA_DIR="data"
 EXECUTABLE_NAME="${PROJECT_NAME}"
-HASH_FILE="${BUILD_DIR}/.build_hash"
-DEFAULT_RUN=true
 VERBOSE=false
 
 # Colors
@@ -27,13 +22,7 @@ NC='\033[0m'
 # =============================================================================
 
 log() {
-    if $VERBOSE; then
-        echo -e "${GREEN}[INFO]${NC} $1"
-    fi
-}
-
-warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+    echo -e "${GREEN}[INFO]${NC} $1"
 }
 
 error() {
@@ -52,81 +41,21 @@ cpu_count() {
     nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1
 }
 
-# Dir hash (fixed)
-dir_hash() {
-    local dir="$1"
-    [ -d "$dir" ] || { echo "0"; return; }
-    
-    # Create temp file for consistent hashing
-    local temp_file
-    temp_file=$(mktemp)
-    
-    # Get sorted list of files and their paths
-    if ! find "$dir" -type f -not -path "*/.*" | sort | while read -r file; do
-        relative="${file#$dir/}"
-        echo "--- $relative ---" >> "$temp_file"
-        cat "$file" >> "$temp_file" 2>/dev/null || echo "read_error" >> "$temp_file"
-        echo "" >> "$temp_file"
-    done; then
-        warn "Hashing error in $dir"
-        rm -f "$temp_file"
-        echo "0"
-        return
-    fi
-    
-    # Calculate hash
-    local hash
-    if command -v sha256sum >/dev/null 2>&1; then
-        hash=$(sha256sum "$temp_file" 2>/dev/null | cut -d' ' -f1)
-    elif command -v shasum >/dev/null 2>&1; then
-        hash=$(shasum -a 256 "$temp_file" 2>/dev/null | cut -d' ' -f1)
-    else
-        hash="0"
-    fi
-    
-    rm -f "$temp_file"
-    echo "${hash:-0}"
-}
-
-# Needs rebuild?
-needs_rebuild() {
-    local src_hash=$(dir_hash "$SRC_DIR")
-    local lib_hash=$(dir_hash "$LIB_DIR")
-    local ext_hash=$(dir_hash "$EXTERNAL_DIR")
-    
-    local current_hash="${src_hash}_${lib_hash}_${ext_hash}"
-    
-    if [ ! -d "$BUILD_DIR" ] || [ ! -f "$HASH_FILE" ]; then
-        return 0  # Needs rebuild
-    fi
-    
-    local prev_hash
-    prev_hash=$(cat "$HASH_FILE" 2>/dev/null || echo "")
-    
-    [ "$current_hash" != "$prev_hash" ] && return 0
-    return 1  # No rebuild needed
-}
-
-update_hash() {
-    local src_hash=$(dir_hash "$SRC_DIR")
-    local lib_hash=$(dir_hash "$LIB_DIR")
-    local ext_hash=$(dir_hash "$EXTERNAL_DIR")
-    mkdir -p "$BUILD_DIR"
-    echo "${src_hash}_${lib_hash}_${ext_hash}" > "$HASH_FILE"
-}
-
 # =============================================================================
 # Build
 # =============================================================================
 
 clean() {
     rm -rf "$BUILD_DIR"
-    log "Cleaned build dir"
 }
 
 setup() {
     mkdir -p "$BUILD_DIR" || error "Cannot create $BUILD_DIR"
-    [ -d "$DATA_DIR" ] && cp -r "$DATA_DIR" "$BUILD_DIR/" 2>/dev/null && log "Copied data"
+    [ -d "$DATA_DIR" ] && {
+        rm -rf "$BUILD_DIR/$DATA_DIR" 2>/dev/null
+        cp -r "$DATA_DIR" "$BUILD_DIR/" 2>/dev/null
+        $VERBOSE && log "Copied data"
+    }
 }
 
 configure() {
@@ -143,7 +72,7 @@ configure() {
         fi
     fi
     cd ..
-    log "Configured"
+    $VERBOSE && log "Configured"
 }
 
 build() {
@@ -164,7 +93,6 @@ build() {
         fi
     fi
     cd ..
-    log "Built"
 }
 
 # =============================================================================
@@ -185,12 +113,13 @@ run() {
 main() {
     [ -f "CMakeLists.txt" ] || error "Run from project root (needs CMakeLists.txt)"
     
+    local build_only=false
     local args=()
+    
     while [ $# -gt 0 ]; do
         case "$1" in
             -v|--verbose) VERBOSE=true; shift ;;
-            -c|--clean) clean; exit 0 ;;
-            -b|--build) shift; DEFAULT_RUN=false; break ;;
+            -b|--build) build_only=true; shift ;;
             -h|--help) show_help; exit 0 ;;
             *) args+=("$1"); shift ;;
         esac
@@ -198,30 +127,26 @@ main() {
     
     check_tools
     
-    if ! needs_rebuild; then
-        log "Build up to date"
-    else
-        clean
-        setup
-        configure
-        build
-        update_hash
-    fi
+    log "Starting build"
+    clean
+    setup
+    configure
+    build
+    log "Build complete"
     
-    $DEFAULT_RUN && run "${args[@]}"
+    [ $build_only = false ] && run "${args[@]}"
 }
 
 show_help() {
     cat << EOF
-Usage: $0 [run|build] [args...]
+Usage: $0 [-b] [-v] [args...]
 
 Options:
-  -v, --verbose  Show build steps
-  -c, --clean    Clean build dir
+  -b, --build    Build only (don't run)
+  -v, --verbose  Show all build steps
   -h, --help     This help
-  -b, --build    Only build without running the project
 
-Default: build and run
+Builds every time, copies data, runs with arguments.
 EOF
 }
 
