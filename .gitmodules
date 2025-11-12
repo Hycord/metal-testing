@@ -1,0 +1,9 @@
+[submodule "deps/glfw"]
+	path = deps/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "deps/flatjson"]
+	path = deps/flatjson
+	url = git@github.com:niXman/flatjson.git
+[submodule "deps/json"]
+	path = deps/json
+	url = git@github.com:nlohmann/json.git
