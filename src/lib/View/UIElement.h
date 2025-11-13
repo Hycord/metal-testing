@@ -2,22 +2,25 @@
 
 #include "UIContainer.h"
 #include "../../config.h"
+#include "UIPrimitives.h"
+#include <memory>
+#include <vector>
 
 class UIElement : public UIContainer {
 public:
-    UIElement(MTL::Device* device, float screenWidth, float screenHeight);
+    UIElement(MTL::Device* device);
     virtual ~UIElement();
-
-    // Called when drawable/window size changes
-    void setScreenSize(float screenWidth, float screenHeight);
 
     // Draw the cached quad if present
     void drawCachedQuad(MTL::RenderCommandEncoder* encoder);
+    // Draw children primitives attached to this UI element (default: draw composed primitives list)
+    virtual void drawPrimitives(MTL::RenderCommandEncoder* encoder);
+
+    // Manage composed primitives
+    void addPrimitive(const std::shared_ptr<UIPrimitive>& prim);
+    void clearPrimitives();
 
 protected:
-    // Derived classes override to respond to size changes (rebuild meshes/resources)
-    virtual void onSizeChanged();
-
     // Helper to build a cached screen-space quad (left, top in pixel coords)
     void buildCachedQuad(float left, float top, float width, float height, const simd::float4 &color);
     void destroyCachedQuad();
@@ -26,12 +29,13 @@ protected:
     void moveCachedQuad(float left, float top, float width, float height);
 
     MTL::Device* device;
-    float screenWidth;
-    float screenHeight;
 
     // cached resources for a simple colored quad
     Mesh quadMesh;
     Shader* quadShader;
     Material* quadMaterial;
     Renderable* quadRenderable;
+    std::vector<std::shared_ptr<UIPrimitive>> primitives;
+    // Expose device to subclasses
+    MTL::Device* getDevice() const { return device; }
 };
