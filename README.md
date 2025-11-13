@@ -81,6 +81,34 @@ There is a small helper script `run.sh` in the repository root that runs the bui
 
 Or run the executable directly from `build/application`.
 
+## Logging (compile-time)
+
+This project includes a small LogManager with three levels: INFO, DEBUG and ERROR.
+By default logging is OFF at compile-time to avoid runtime cost and to keep binaries small.
+
+To enable one or more logging levels, pass a preprocessor definition when configuring/building.
+Examples below show how to enable DEBUG logs; replace with `ENABLE_LOG_INFO` or `ENABLE_LOG_ERROR` as needed.
+
+Using CMake directly:
+
+```bash
+# create a build directory and configure with extra CXX flags that define the macro
+mkdir -p build && cd build
+cmake -DCMAKE_CXX_FLAGS="-DENABLE_LOG_DEBUG" -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Debug ..
+cmake --build . -- -j$(sysctl -n hw.ncpu)
+```
+
+Or with the included `run.sh` helper you can add the CXX flag via the `EXTRA_CXX_FLAGS` environment variable:
+
+```bash
+EXTRA_CXX_FLAGS="-DENABLE_LOG_DEBUG -DENABLE_LOG_INFO" ./run.sh -v
+```
+
+Notes:
+- When a logging level is not enabled at compile-time its calls are compiled away (no runtime cost).
+- When enabled, you can still toggle each level at runtime through `LogManager::setEnabled(...)` if you want finer control.
+
+
 ## Project layout
 
 - `CMakeLists.txt` — top-level CMake configuration

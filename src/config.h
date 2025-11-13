@@ -12,8 +12,20 @@
 #include <sstream>
 #include <fstream>
 
+
+#define ENABLE_LOG_ERROR
+#define ENABLE_LOG_INFO
+// #define ENABLE_LOG_DEBUG
+
 struct Vertex
 {
     simd::float3 position;
     simd::float3 color;
+};
+
+
+struct Mesh
+{
+    MTL::Buffer *vertexBuffer, *indexBuffer;
+    MTL::VertexDescriptor* vertexDescriptor;
 };

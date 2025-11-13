@@ -1,10 +1,12 @@
 #include "Application.h"
-#include "GLFWAdapter.h"
-#include "../Utils/Math.h"
+#include "./lib/GLFW/GLFWAdapter.h"
+#include "./lib/Utils/Math.h"
+#include "./lib/LogManager/LogManager.h"
 #include <iostream>
 
 Application::Application()
 {
+    LOG_CONSTRUCT("Application");
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindow = glfwCreateWindow(800, 600, "Treecord", NULL, NULL);
@@ -18,7 +20,7 @@ Application::Application()
 
     window = get_ns_window(glfwWindow, metalLayer)->retain();
 
-    renderer = new Renderer(device, metalLayer);
+    renderer = new MeshRenderer(device, metalLayer);
 
     cameraX = -10.0f;
     cameraY = 0.0f;
@@ -30,6 +32,7 @@ Application::Application()
 
 Application::~Application()
 {
+    LOG_DESTROY("Application");
     window->release();
     delete renderer;
     glfwTerminate();
@@ -37,6 +40,7 @@ Application::~Application()
 
 void Application::run()
 {
+    LOG_START("Application: run starting");
 
     double cursor_x, cursor_y;
     float dx, dy;
@@ -48,6 +52,16 @@ void Application::run()
         if (glfwGetKey(glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
         {
             cameraX += 0.1f;
+        }
+
+        if (glfwGetKey(glfwWindow, GLFW_KEY_A) == GLFW_PRESS)
+        {
+            cameraY += 0.1f;
+        }
+
+        if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
+        {
+            cameraY -= 0.1f;
         }
 
         if (glfwGetKey(glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
@@ -91,4 +105,5 @@ void Application::run()
 
         renderer->draw(view);
     }
+    LOG_FINISH("Application: run finished");
 }

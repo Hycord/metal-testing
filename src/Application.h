@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../config.h"
-#include "../View/Renderer.h"
+#include "config.h"
+#include "./lib/View/MeshRenderer.h"
 
 class Application {
     public:
@@ -15,7 +15,7 @@ class Application {
         MTL::Device* device;
         CA::MetalLayer* metalLayer;
         NS::Window* window;
-        Renderer* renderer;
+    MeshRenderer* renderer;
 
         float cameraX, cameraY, cameraZ;
         float cameraPitch, cameraYaw;

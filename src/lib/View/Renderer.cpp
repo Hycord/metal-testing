@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "../LogManager/LogManager.h"
-#include "../FileReader/FileReader.h"
+#include "../Utils/FileReader.h"
+#include "PipelineFactory.h"
 #include "../Utils/Math.h"
 #include <cstddef>
 
@@ -8,14 +9,19 @@ Renderer::Renderer(MTL::Device *device, CA::MetalLayer *metalLayer) : device(dev
                                                                       metalLayer(metalLayer->retain()),
                                                                       commandQueue(device->newCommandQueue()->retain())
 {
+    LOG_CONSTRUCT("Renderer");
     buildMeshes();
     buildShaders();
 }
 
 Renderer::~Renderer()
 {
+    LOG_DESTROY("Renderer");
     quadMesh.indexBuffer->release();
     quadMesh.vertexBuffer->release();
+    if (quadMesh.vertexDescriptor) {
+        quadMesh.vertexDescriptor->release();
+    }
 
     triangleMesh->release();
     trianglePipeline->release();
@@ -32,68 +38,29 @@ void Renderer::buildMeshes()
 
 void Renderer::buildShaders()
 {
-    LogManager::Log("Reloading Shader Files");
-    generalPipeline = buildShader("General", "vertexGeneral", "fragmentGeneral")->retain();
-    trianglePipeline = buildShader("Triangle", "vertexTriangle", "fragmentTriangle")->retain();
-}
+    LOG_START("Renderer: Reloading Shader Files");
+    LOG_DEBUG("Renderer creating PipelineFactory");
+    PipelineFactory *builder = new PipelineFactory(device);
+    LOG_DEBUG("Renderer PipelineFactory created: %p", builder);
 
-MTL::RenderPipelineState *Renderer::buildShader(const char *fileName, const char *vertexName, const char *fragmentName)
-{
-    MTL::RenderPipelineState *pipeline;
-    std::string name = std::string("data/Shaders/") + fileName + ".metal";
-    std::string reader = ReadFile(name);
-    NS::String *shaderSource = NS::String::string(reader.c_str(), NS::StringEncoding::UTF8StringEncoding);
+    LOG_DEBUG("Renderer set vertex descriptor");
+    builder->set_vertex_descriptor(quadMesh.vertexDescriptor);
+    builder->set_filename("Triangle");
+    builder->set_vertex_entry_point("vertexTriangle");
+    builder->set_fragment_entry_point("fragmentTriangle");
+    LOG_DEBUG("Renderer building triangle pipeline");
+    trianglePipeline = builder->build();
+    LOG_DEBUG("Renderer trianglePipeline=%p", trianglePipeline);
 
-    NS::Error *error = nullptr;
-    MTL::CompileOptions *options = nullptr;
-    MTL::Library *library = device->newLibrary(shaderSource, options, &error);
-    if (!library)
-    {
-        std::cout << error->localizedDescription()->utf8String() << std::endl;
-    }
+    builder->set_filename("General");
+    builder->set_vertex_entry_point("vertexGeneral");
+    builder->set_fragment_entry_point("fragmentGeneral");
+    LOG_DEBUG("Renderer building general pipeline");
+    generalPipeline = builder->build();
+    LOG_DEBUG("Renderer generalPipeline=%p", generalPipeline);
 
-    NS::String *vertexNameNS = NS::String::string(vertexName, NS::StringEncoding::UTF8StringEncoding);
-    MTL::Function *vertexMain = library->newFunction(vertexNameNS);
-
-    NS::String *fragmentNameNS = NS::String::string(fragmentName, NS::StringEncoding::UTF8StringEncoding);
-    MTL::Function *fragmentMain = library->newFunction(fragmentNameNS);
-
-    MTL::RenderPipelineDescriptor *pipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
-    pipelineDescriptor->setVertexFunction(vertexMain);
-    pipelineDescriptor->setFragmentFunction(fragmentMain);
-    pipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB);
-
-    MTL::VertexDescriptor *vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
-    auto attributes = vertexDescriptor->attributes();
-
-    // attribute 0: Position
-    auto positionDescriptor = attributes->object(0);
-    positionDescriptor->setFormat(MTL::VertexFormat::VertexFormatFloat3);
-    positionDescriptor->setOffset(offsetof(Vertex, position));
-    positionDescriptor->setBufferIndex(0);
-    // attribute 1: Color
-    auto colorDescriptor = attributes->object(1);
-    colorDescriptor->setFormat(MTL::VertexFormat::VertexFormatFloat3);
-    colorDescriptor->setBufferIndex(0);
-    colorDescriptor->setOffset(offsetof(Vertex, color));
-
-    auto layoutDescriptor = vertexDescriptor->layouts()->object(0);
-    layoutDescriptor->setStride(sizeof(Vertex));
-
-    pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
-
-    pipeline = device->newRenderPipelineState(pipelineDescriptor, &error);
-    if (!pipeline)
-    {
-        std::cout << error->localizedDescription()->utf8String() << std::endl;
-    }
-
-    vertexMain->release();
-    fragmentMain->release();
-
-    pipelineDescriptor->release();
-    library->release();
-    return pipeline;
+    delete builder;
+    LOG_FINISH("Renderer: shader loading finished");
 }
 
 void Renderer::draw(const simd::float4x4 &view)
@@ -114,7 +81,7 @@ void Renderer::draw(const simd::float4x4 &view)
     MTL::RenderPassColorAttachmentDescriptor *colorAttachment = renderPass->colorAttachments()->object(0);
     colorAttachment->setTexture(drawableArea->texture());
     colorAttachment->setLoadAction(MTL::LoadActionClear);
-    colorAttachment->setClearColor(MTL::ClearColor(0.75f, 0.25f, 0.125f, 1.0f));
+    colorAttachment->setClearColor(MTL::ClearColor(0.1f, 0.1f, 0.1f, 1.0f));
     colorAttachment->setStoreAction(MTL::StoreActionStore);
 
     MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPass);
@@ -122,11 +89,10 @@ void Renderer::draw(const simd::float4x4 &view)
     encoder->setRenderPipelineState(generalPipeline);
 
     simd::float4x4 projection = MetalMath::perspectiveProjection(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
-    encoder->setVertexBytes(&projection, sizeof(simd::float4x4), 2);
-
-    encoder->setVertexBytes(&view, sizeof(simd::float4x4), 3);
-
     simd::float4x4 transform = MetalMath::translate({0.0f, 0.0f, 3.0f});
+
+    encoder->setVertexBytes(&projection, sizeof(simd::float4x4), 2);
+    encoder->setVertexBytes(&view, sizeof(simd::float4x4), 3);
     encoder->setVertexBytes(&transform, sizeof(simd::float4x4), 1);
 
     encoder->setVertexBuffer(quadMesh.vertexBuffer, 0, 0);

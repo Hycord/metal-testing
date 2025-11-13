@@ -61,12 +61,12 @@ setup() {
 configure() {
     cd "$BUILD_DIR" || error "Cannot enter $BUILD_DIR"
     if $VERBOSE; then
-        if ! cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES="arm64" ..; then
+        if ! cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_CXX_FLAGS="$EXTRA_CXX_FLAGS" ..; then
             cd ..
             error "CMake config failed"
         fi
     else
-        if ! cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES="arm64" .. >/dev/null 2>&1; then
+        if ! cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_CXX_FLAGS="$EXTRA_CXX_FLAGS" .. >/dev/null 2>&1; then
             cd ..
             error "CMake config failed"
         fi
@@ -119,6 +119,24 @@ main() {
     while [ $# -gt 0 ]; do
         case "$1" in
             -v|--verbose) VERBOSE=true; shift ;;
+            --disable-log-debug-build)
+                EXTRA_CXX_FLAGS="$EXTRA_CXX_FLAGS -DDISABLE_LOG_DEBUG"
+                shift ;;
+            --enable-log-debug-build)
+                # No-op: keep debug logs enabled at compile time
+                shift ;;
+            --disable-log-info-build)
+                EXTRA_CXX_FLAGS="$EXTRA_CXX_FLAGS -DDISABLE_LOG_INFO"
+                shift ;;
+            --enable-log-info-build)
+                shift ;;
+            --disable-log-error-build)
+                EXTRA_CXX_FLAGS="$EXTRA_CXX_FLAGS -DDISABLE_LOG_ERROR"
+                shift ;;
+            --enable-log-error-build)
+                shift ;;
+            --log-debug|--no-log-debug|--log-info|--no-log-info|--log-error|--no-log-error)
+                args+=("$1") ; shift ;;
             -b|--build) build_only=true; shift ;;
             -h|--help) show_help; exit 0 ;;
             *) args+=("$1"); shift ;;

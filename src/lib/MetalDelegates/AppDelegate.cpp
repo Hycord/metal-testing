@@ -1,7 +1,9 @@
 
 #include "AppDelegate.h"
+#include "../LogManager/LogManager.h"
 AppDelegate::~AppDelegate()
 {
+    LOG_DESTROY("AppDelegate");
     mtkView->release();
     window->release();
     device->release();
@@ -36,6 +38,8 @@ void AppDelegate::applicationDidFinishLaunching(NS::Notification* notification)
     window->setContentView(mtkView);
     window->setTitle(NS::String::string("Window", NS::StringEncoding::UTF8StringEncoding));
     window->makeKeyAndOrderFront(nullptr);
+
+    LOG_FINISH("AppDelegate: window created and shown");
 
     NS::Application* app = reinterpret_cast<NS::Application*>(notification->object());
     app->activateIgnoringOtherApps(true);

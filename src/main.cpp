@@ -4,16 +4,18 @@
 #define CA_PRIVATE_IMPLEMENTATION
 
 #include "config.h"
-#include "lib/GLFW/Application.h"
+#include "Application.h"
+#include "lib/LogManager/LogManager.h"
+#include <cstring>
 
-int main()
+int main(int argc, char **argv)
 {
-
     NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
-
+    LOG_START("main: creating Application");
     Application *application = new Application();
     application->run();
     delete application;
+    LOG_FINISH("main: Application destroyed");
 
     autoreleasePool->release();
 
