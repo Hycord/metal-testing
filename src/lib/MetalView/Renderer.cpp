@@ -118,9 +118,6 @@ void Renderer::draw(MTK::View *view)
     encoder->setVertexBuffer(quadMesh.vertexBuffer, NS::UInteger(0), NS::UInteger(0));
     encoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(6), MTL::IndexType::IndexTypeUInt16, quadMesh.indexBuffer, NS::UInteger(0), NS::UInteger(1));
 
-    // encoder->setVertexBuffer(triangleMesh, 0, 0);
-    // encoder->drawPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(3));
-
     encoder->endEncoding();
     commandBuffer->presentDrawable(view->currentDrawable());
     commandBuffer->commit();
