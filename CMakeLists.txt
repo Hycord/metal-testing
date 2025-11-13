@@ -23,7 +23,8 @@ find_library(METALKIT MetalKit)
 
 # Include directories
 target_include_directories(application PRIVATE 
-    deps/Apple 
+    deps/Apple
+    src
 )
 
 # Link libraries

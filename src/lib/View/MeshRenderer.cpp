@@ -5,6 +5,7 @@
 #include <cmath>
 #include "../Utils/Math.h"
 #include "UIElement.h"
+#include "../Input/InputState.h"
 
 MeshRenderer::MeshRenderer(MTL::Device *device, CA::MetalLayer *metalLayer)
     : device(device->retain()), metalLayer(metalLayer->retain()), commandQueue(device->newCommandQueue()->retain()), projectionMode(ProjectionMode::Perspective)
@@ -18,6 +19,7 @@ MeshRenderer::MeshRenderer(MTL::Device *device, CA::MetalLayer *metalLayer)
     orthoNear = -1.0f;
     orthoFar = 1.0f;
     depthState = nullptr;
+    depthStateUI = nullptr;
     depthTexture = nullptr;
 
     // create a default depth-stencil state with depth writes enabled and a LESS compare function
@@ -26,6 +28,13 @@ MeshRenderer::MeshRenderer(MTL::Device *device, CA::MetalLayer *metalLayer)
     dsDesc->setDepthWriteEnabled(true);
     depthState = device->newDepthStencilState(dsDesc);
     dsDesc->release();
+
+    // UI depth state: no depth write, always pass (so UI overlays draw on top)
+    MTL::DepthStencilDescriptor *dsUIDesc = MTL::DepthStencilDescriptor::alloc()->init();
+    dsUIDesc->setDepthCompareFunction(MTL::CompareFunction::CompareFunctionAlways);
+    dsUIDesc->setDepthWriteEnabled(false);
+    depthStateUI = device->newDepthStencilState(dsUIDesc);
+    dsUIDesc->release();
 }
 
 MeshRenderer::~MeshRenderer()
@@ -38,6 +47,8 @@ MeshRenderer::~MeshRenderer()
     device->release();
     if (depthState)
         depthState->release();
+    if (depthStateUI)
+        depthStateUI->release();
     if (depthTexture)
         depthTexture->release();
 }
@@ -159,8 +170,11 @@ void MeshRenderer::draw(const simd::float4x4 &view)
     {
         if (r->isScreenSpace())
         {
-            // for screen-space draw, use ortho and an identity view
+            // Switch to UI depth state so overlays ignore depth
+            if (depthStateUI) encoder->setDepthStencilState(depthStateUI);
             r->draw(encoder, ortho, MetalMath::identity());
+            // Restore scene depth state for subsequent world-space draws
+            if (depthState) encoder->setDepthStencilState(depthState);
         }
         else
         {
@@ -258,17 +272,16 @@ void MeshRenderer::draw(const simd::float4x4 &view, const std::vector<std::share
     }
     auto afterScene = std::chrono::high_resolution_clock::now();
 
-    // If any UI elements implement UIElement::setScreenSize, update them with the drawable size
-    for (const auto &uiElement : uiElements)
-    {
-        if (!uiElement) continue;
-        UIElement* uiel = dynamic_cast<UIElement*>(uiElement.get());
-        if (uiel) {
-            uiel->setScreenSize(float(drawableWidth), float(drawableHeight));
-        }
-    }
+    // Do NOT overwrite logical window size with framebuffer pixel size.
+    // GLFW provides mouse and window sizes in logical coordinates, while the drawable
+    // size may be scaled (e.g., Retina). Mixing these causes UI to drift after resize.
+    // Keep InputState's window size driven by GLFW window size callbacks only.
     auto beforeUI = std::chrono::high_resolution_clock::now();
 
+    // Before drawing UI elements, ensure UI depth state is active so they render on top
+    if (depthStateUI) {
+        encoder->setDepthStencilState(depthStateUI);
+    }
     // Draw UI elements into the same encoder so we only present once and avoid races/crashes
     for (const auto &uiElement : uiElements)
     {

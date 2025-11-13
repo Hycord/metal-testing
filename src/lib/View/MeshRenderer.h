@@ -44,6 +44,7 @@ private:
     CA::MetalDrawable *drawableArea;
     MTL::CommandQueue *commandQueue;
     MTL::DepthStencilState *depthState;
+    MTL::DepthStencilState *depthStateUI; // depth disabled for UI overlays
     MTL::Texture *depthTexture;
 
     std::vector<Renderable*> renderables;

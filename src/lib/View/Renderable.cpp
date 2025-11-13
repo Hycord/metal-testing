@@ -35,7 +35,7 @@ void Renderable::draw(MTL::RenderCommandEncoder *encoder, const simd::float4x4 &
 
     if (mesh.indexBuffer) {
         // indexed draw
-        encoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle,
+        encoder->drawIndexedPrimitives(primitiveType,
                                        NS::UInteger(mesh.indexCount),
                                        MTL::IndexType::IndexTypeUInt16,
                                        mesh.indexBuffer,
@@ -43,6 +43,6 @@ void Renderable::draw(MTL::RenderCommandEncoder *encoder, const simd::float4x4 &
                                        NS::UInteger(1));
     } else if (mesh.vertexBuffer) {
         // non-indexed; assume 3 vertices as in triangle
-        encoder->drawPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(mesh.vertexCount));
+        encoder->drawPrimitives(primitiveType, NS::UInteger(0), NS::UInteger(mesh.vertexCount));
     }
 }
