@@ -5,7 +5,7 @@
 #include "systems/input/InputState.h"
 #include <iostream>
 #include <algorithm>
-#include "components/renderables/ui/UIContainer.h"
+#include "components/renderables/core/UIContainer.h"
 #include "components/renderables/ui/FPSMonitor.h"
 
 Application::Application()

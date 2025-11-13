@@ -3,7 +3,7 @@
 #include "config.h"
 #include "systems/MeshRenderer.h"
 #include "components/engine/Renderable.h"
-#include "components/renderables/ui/UIContainer.h"
+#include "components/renderables/core/UIContainer.h"
 #include <vector>
 #include <memory>
 

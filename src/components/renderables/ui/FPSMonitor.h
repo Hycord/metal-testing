@@ -1,7 +1,7 @@
 #pragma once
 
-#include "components/renderables/ui/UIElement.h"
-#include "components/renderables/ui/UIPrimitives.h"
+#include "components/renderables/core/UIElement.h"
+#include "components/renderables/primitives/UIPrimitives.h"
 #include <chrono>
 
 class FPSMonitor : public UIElement {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "components/renderables/ui/UIContainer.h"
+#include "components/renderables/core/UIContainer.h"
 #include "config.h"
-#include "components/renderables/ui/UIPrimitives.h"
+#include "components/renderables/primitives/UIPrimitives.h"
 #include <memory>
 #include <vector>
 

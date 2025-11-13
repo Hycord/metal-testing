@@ -4,7 +4,7 @@
 #include "factories/MeshFactory.h"
 #include <cmath>
 #include "utils/Math.h"
-#include "components/renderables/ui/UIElement.h"
+#include "components/renderables/core/UIElement.h"
 #include "systems/input/InputState.h"
 
 MeshRenderer::MeshRenderer(MTL::Device *device, CA::MetalLayer *metalLayer)

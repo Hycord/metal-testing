@@ -1,4 +1,4 @@
-#include "components/renderables/ui/UIPrimitives.h"
+#include "components/renderables/primitives/UIPrimitives.h"
 #include "utils/Math.h"
 #include "systems/input/InputState.h"
 #include <cmath>
