@@ -15,14 +15,10 @@ public:
     void setScreenSpace(bool v) { screenSpace = v; }
     bool isScreenSpace() const { return screenSpace; }
 
-    void setPrimitiveType(MTL::PrimitiveType t) { primitiveType = t; }
-    MTL::PrimitiveType getPrimitiveType() const { return primitiveType; }
-
 private:
     Mesh mesh;
     Material *material;
     simd::float4x4 transform;
     bool screenSpace;
-    MTL::PrimitiveType primitiveType = MTL::PrimitiveType::PrimitiveTypeTriangle;
 };
 
