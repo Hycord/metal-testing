@@ -4,8 +4,8 @@
 #define CA_PRIVATE_IMPLEMENTATION
 
 #include "config.h"
-#include "Application.h"
-#include "lib/LogManager/LogManager.h"
+#include "controller/Application.h"
+#include "core/LogManager.h"
 #include <cstring>
 
 int main(int argc, char **argv)
