@@ -1,5 +1,7 @@
 
 #pragma once
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 #include <Metal/Metal.hpp>
 #include <AppKit/AppKit.hpp>
 #include <MetalKit/MetalKit.hpp>
@@ -12,6 +14,6 @@
 
 struct Vertex
 {
-    simd::float2 position;
+    simd::float3 position;
     simd::float3 color;
 };

@@ -90,9 +90,9 @@ Or run the executable directly from `build/application`.
 - `deps/` — third-party headers and helper include files
 - `src/` — application source
   - `main.cpp` — platform/application entry
-  - `lib/` — modules: `FileReader`, `LogManager`, `MetalController`, `MetalView`, `MetalMath` etc.
+  - `lib/` — modules: `FileReader`, `LogManager`, `MetalDelegates`, `View`, `Utils` etc.
 
 Example important files in `src/`:
 - `src/main.cpp` — bootstraps the application and Metal view
-- `src/lib/MetalController/` — app & view delegate glue
-- `src/lib/MetalView/Renderer.cpp` — renderer implementation
+- `src/lib/MetalDelegates/` — app & view delegate glue
+- `src/lib/View/Renderer.cpp` — renderer implementation

@@ -7,3 +7,6 @@
 [submodule "deps/json"]
 	path = deps/json
 	url = git@github.com:nlohmann/json.git
+[submodule "deps/--force"]
+	path = deps/--force
+	url = git@github.com:glfw/glfw.git

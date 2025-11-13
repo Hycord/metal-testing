@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "arm64")
 
 # Collect source files
-file(GLOB_RECURSE SOURCES src/*.cpp)
+file(GLOB_RECURSE SOURCES src/*.cpp src/*.mm)
 
 # Create executable
 add_executable(application ${SOURCES})
@@ -36,6 +36,7 @@ target_link_libraries(application
     "-framework MetalKit"
     nlohmann_json::nlohmann_json
     objc
+    glfw
 )
 
 # # Set Objective-C++ linking flags

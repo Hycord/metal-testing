@@ -4,18 +4,16 @@
 #define CA_PRIVATE_IMPLEMENTATION
 
 #include "config.h"
-#include "lib/MetalController/AppDelegate.h"
+#include "lib/GLFW/Application.h"
 
 int main()
 {
 
     NS::AutoreleasePool *autoreleasePool = NS::AutoreleasePool::alloc()->init();
 
-    AppDelegate controller;
-
-    NS::Application *app = NS::Application::sharedApplication();
-    app->setDelegate(&controller);
-    app->run();
+    Application *application = new Application();
+    application->run();
+    delete application;
 
     autoreleasePool->release();
 

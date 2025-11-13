@@ -1,6 +1,6 @@
 #pragma once
 #include "../../config.h"
-#include "../MetalView/Renderer.h"
+#include "../View/Renderer.h"
 class ViewDelegate : public MTK::ViewDelegate
 {
     public:
@@ -10,4 +10,5 @@ class ViewDelegate : public MTK::ViewDelegate
 
     private:
         Renderer* renderer;
+        float cameraX, cameraY, cameraZ, cameraYaw, cameraPitch;
 };

@@ -1,14 +1,15 @@
 #include "Renderer.h"
 #include "../LogManager/LogManager.h"
 #include "../FileReader/FileReader.h"
-#include "../MetalMath/MetalMath.h"
+#include "../Utils/Math.h"
 #include <cstddef>
 
-Renderer::Renderer(MTL::Device *device) : device(device->retain())
+Renderer::Renderer(MTL::Device *device, CA::MetalLayer *metalLayer) : device(device->retain()),
+                                                                      metalLayer(metalLayer->retain()),
+                                                                      commandQueue(device->newCommandQueue()->retain())
 {
-    commandQueue = device->newCommandQueue();
-    buildShaders();
     buildMeshes();
+    buildShaders();
 }
 
 Renderer::~Renderer()
@@ -67,7 +68,7 @@ MTL::RenderPipelineState *Renderer::buildShader(const char *fileName, const char
 
     // attribute 0: Position
     auto positionDescriptor = attributes->object(0);
-    positionDescriptor->setFormat(MTL::VertexFormat::VertexFormatFloat2);
+    positionDescriptor->setFormat(MTL::VertexFormat::VertexFormatFloat3);
     positionDescriptor->setOffset(offsetof(Vertex, position));
     positionDescriptor->setBufferIndex(0);
     // attribute 1: Color
@@ -95,7 +96,7 @@ MTL::RenderPipelineState *Renderer::buildShader(const char *fileName, const char
     return pipeline;
 }
 
-void Renderer::draw(MTK::View *view)
+void Renderer::draw(const simd::float4x4 &view)
 {
 
     t += 1.0f;
@@ -107,19 +108,38 @@ void Renderer::draw(MTK::View *view)
     NS::AutoreleasePool *pool = NS::AutoreleasePool::alloc()->init();
 
     MTL::CommandBuffer *commandBuffer = commandQueue->commandBuffer();
-    MTL::RenderPassDescriptor *renderPass = view->currentRenderPassDescriptor();
+    MTL::RenderPassDescriptor *renderPass = MTL::RenderPassDescriptor::alloc()->init();
+
+    drawableArea = metalLayer->nextDrawable();
+    MTL::RenderPassColorAttachmentDescriptor *colorAttachment = renderPass->colorAttachments()->object(0);
+    colorAttachment->setTexture(drawableArea->texture());
+    colorAttachment->setLoadAction(MTL::LoadActionClear);
+    colorAttachment->setClearColor(MTL::ClearColor(0.75f, 0.25f, 0.125f, 1.0f));
+    colorAttachment->setStoreAction(MTL::StoreActionStore);
+
     MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(renderPass);
 
     encoder->setRenderPipelineState(generalPipeline);
 
-    simd::float4x4 transform = MetalMath::translate({0.5f, 0.5f, 0.0f}) * MetalMath::rotateZ(t) * MetalMath::scale(0.1f);
+    simd::float4x4 projection = MetalMath::perspectiveProjection(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+    encoder->setVertexBytes(&projection, sizeof(simd::float4x4), 2);
+
+    encoder->setVertexBytes(&view, sizeof(simd::float4x4), 3);
+
+    simd::float4x4 transform = MetalMath::translate({0.0f, 0.0f, 3.0f});
     encoder->setVertexBytes(&transform, sizeof(simd::float4x4), 1);
 
-    encoder->setVertexBuffer(quadMesh.vertexBuffer, NS::UInteger(0), NS::UInteger(0));
-    encoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(6), MTL::IndexType::IndexTypeUInt16, quadMesh.indexBuffer, NS::UInteger(0), NS::UInteger(1));
+    encoder->setVertexBuffer(quadMesh.vertexBuffer, 0, 0);
+    encoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(6), MTL::IndexType::IndexTypeUInt16, quadMesh.indexBuffer, NS::UInteger(0), NS::UInteger(6));
+
+    transform = MetalMath::translate({0.5f, 0.5f, 2.0f}) * MetalMath::rotateZ(t) * MetalMath::scale(0.1f);
+    encoder->setVertexBytes(&transform, sizeof(simd::float4x4), 1);
+
+    encoder->setVertexBuffer(triangleMesh, 0, 0);
+    encoder->drawPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(3));
 
     encoder->endEncoding();
-    commandBuffer->presentDrawable(view->currentDrawable());
+    commandBuffer->presentDrawable(drawableArea);
     commandBuffer->commit();
 
     pool->release();
