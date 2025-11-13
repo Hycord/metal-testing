@@ -12,8 +12,13 @@ public:
 
     void draw(MTL::RenderCommandEncoder *encoder, const simd::float4x4 &projection, const simd::float4x4 &view);
 
+    void setScreenSpace(bool v) { screenSpace = v; }
+    bool isScreenSpace() const { return screenSpace; }
+
 private:
     Mesh mesh;
     Material *material;
     simd::float4x4 transform;
+    bool screenSpace;
 };
+

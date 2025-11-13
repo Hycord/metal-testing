@@ -67,6 +67,8 @@ MTL::RenderPipelineState* PipelineFactory::build() {
     pipelineDescriptor->colorAttachments()
                     ->object(0)
                     ->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB);
+    // enable a depth attachment format so the pipeline can use depth testing
+    pipelineDescriptor->setDepthAttachmentPixelFormat(MTL::PixelFormat::PixelFormatDepth32Float);
     
     pipelineDescriptor->setVertexDescriptor(vertexDescriptor);
     

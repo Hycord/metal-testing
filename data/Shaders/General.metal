@@ -29,7 +29,12 @@ VertexOutput vertex vertexGeneral(
     return payload;
 }
 
-half4 fragment fragmentGeneral(VertexOutput frag [[stage_in]])
+// fragment buffer(0) is reserved for a material color (float4)
+half4 fragment fragmentGeneral(VertexOutput frag [[stage_in]], constant float4 &materialColor [[buffer(0)]])
 {
-    return half4(frag.color, 1.0);
+    // Multiply vertex color by the material color so materials can tint meshes and
+    // screen-space quads. The material's alpha controls the output alpha.
+    half3 col = frag.color * half3(materialColor.xyz);
+    half a = half(materialColor.w);
+    return half4(col, a);
 }

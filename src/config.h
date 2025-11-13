@@ -28,4 +28,7 @@ struct Mesh
 {
     MTL::Buffer *vertexBuffer, *indexBuffer;
     MTL::VertexDescriptor* vertexDescriptor;
+    // how many vertices/indices to draw
+    size_t vertexCount;
+    size_t indexCount;
 };

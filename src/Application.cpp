@@ -3,6 +3,8 @@
 #include "./lib/Utils/Math.h"
 #include "./lib/LogManager/LogManager.h"
 #include <iostream>
+#include "./lib/View/UIContainer.h"
+#include "Renderable/UI/FPSMonitor.h"
 
 Application::Application()
 {
@@ -10,7 +12,9 @@ Application::Application()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindow = glfwCreateWindow(800, 600, "Treecord", NULL, NULL);
-    glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    // Do not hide or capture the cursor; allow normal OS cursor behavior so
+    // UI elements (like the FPS monitor) can follow the mouse.
+    glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     device = MTL::CreateSystemDefaultDevice();
 
@@ -22,12 +26,43 @@ Application::Application()
 
     renderer = new MeshRenderer(device, metalLayer);
 
+    // // --- Example renderables: a cube at world origin and a screen-space square ---
+    // // Build a cube mesh and add as world-space renderable
+    // Mesh cubeMesh = MeshFactory::buildCube(device);
+    // Shader *cubeShader = new Shader(device, "General", "vertexGeneral", "fragmentGeneral", cubeMesh.vertexDescriptor);
+    // Material *cubeMaterial = new Material(cubeShader);
+    // cubeMaterial->setColor({0.2f, 0.7f, 0.3f, 1.0f});
+    // Renderable *cubeRenderable = new Renderable(cubeMesh, cubeMaterial);
+    // cubeRenderable->setTransform(MetalMath::translate({0.0f, 0.0f, 0.0f}));
+    // renderer->addRenderable(cubeRenderable);
+
+    // // Build a screen-space 100x100 quad at (100,100) from top-left
+    // // Set renderer ortho params to match the window size (800x600 created above)
+    // renderer->setOrthoParams(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
+    // Mesh screenQuad = MeshFactory::buildScreenQuad(device, 100.0f, 100.0f, 100.0f, 100.0f);
+    // Shader *quadShader = new Shader(device, "General", "vertexGeneral", "fragmentGeneral", screenQuad.vertexDescriptor);
+    // Material *quadMaterial = new Material(quadShader);
+    // quadMaterial->setColor({1.0f, 0.2f, 0.2f, 1.0f});
+    // Renderable *screenRenderable = new Renderable(screenQuad, quadMaterial);
+    // screenRenderable->setScreenSpace(true);
+    // renderer->addRenderable(screenRenderable);
+
     cameraX = -10.0f;
     cameraY = 0.0f;
     cameraZ = 5.0f;
 
     cameraYaw = 0.0f;
     cameraPitch = 0.0f;
+
+    // Initialize UI elements (pass device and window size)
+    fpsMonitor = new FPSMonitor(device, 800.0f, 600.0f);
+    uiElements.push_back(std::shared_ptr<UIContainer>(fpsMonitor));
+
+    // Initialize previous cursor position to current cursor so first-frame deltas are small
+    double init_x, init_y;
+    glfwGetCursorPos(glfwWindow, &init_x, &init_y);
+    prevCursorX = init_x;
+    prevCursorY = init_y;
 }
 
 Application::~Application()
@@ -36,6 +71,12 @@ Application::~Application()
     window->release();
     delete renderer;
     glfwTerminate();
+
+    // Clean up UI elements
+    for (auto &uiElement : uiElements)
+    {
+        uiElement.reset();
+    }
 }
 
 void Application::run()
@@ -74,14 +115,21 @@ void Application::run()
             glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
         }
 
-        glfwGetCursorPos(glfwWindow, &cursor_x, &cursor_y);
-        dx = -10.0f * static_cast<float>(cursor_x / 400.0 - 1.0);
-        dy = -10.0f * static_cast<float>(cursor_y / 300.0 - 1.0);
-        glfwSetCursorPos(glfwWindow, 400.0, 300.0);
+    glfwGetCursorPos(glfwWindow, &cursor_x, &cursor_y);
 
-        cameraPitch = std::min(89.0f, std::max(-89.0f, cameraPitch + dy));
+    // Compute deltas from previous cursor position instead of recentering the
+    // cursor each frame. This avoids capturing the mouse and lets the OS
+    // cursor move freely while still providing motion for the camera.
+    dx = -10.0f * static_cast<float>(cursor_x - prevCursorX);
+    dy = -10.0f * static_cast<float>(cursor_y - prevCursorY);
 
-        cameraYaw = cameraYaw + dx;
+    // Update previous cursor position for next frame
+    prevCursorX = cursor_x;
+    prevCursorY = cursor_y;
+
+    cameraPitch = std::min(89.0f, std::max(-89.0f, cameraPitch + dy));
+
+    cameraYaw = cameraYaw + dx;
         if (cameraYaw < 0.0f)
         {
             cameraYaw += 360.0f;
@@ -103,7 +151,14 @@ void Application::run()
 
         simd::float4x4 view = MetalMath::cameraView(right, up, forwards, pos);
 
-        renderer->draw(view);
+        // Update FPS monitor position (follow the OS cursor). The cursor coordinates
+        // are in window client-space with origin at top-left (GLFW convention).
+        if (fpsMonitor) {
+            fpsMonitor->setPosition(static_cast<float>(cursor_x) + 12.0f, static_cast<float>(cursor_y) + 12.0f);
+        }
+
+        // Draw scene and UI together in one pass to avoid double-present issues.
+        renderer->draw(view, uiElements);
     }
     LOG_FINISH("Application: run finished");
 }

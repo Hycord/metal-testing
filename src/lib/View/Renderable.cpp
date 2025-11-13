@@ -3,6 +3,7 @@
 #include "../Utils/Math.h"
 
 Renderable::Renderable(const Mesh &m, Material *mat) : mesh(m), material(mat), transform(MetalMath::identity()) {
+    screenSpace = false;
     // retain buffers so lifetime is explicit (match project's retain/release style where needed)
     if (mesh.vertexBuffer) mesh.vertexBuffer->retain();
     if (mesh.indexBuffer) mesh.indexBuffer->retain();
@@ -34,9 +35,14 @@ void Renderable::draw(MTL::RenderCommandEncoder *encoder, const simd::float4x4 &
 
     if (mesh.indexBuffer) {
         // indexed draw
-        encoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(6), MTL::IndexType::IndexTypeUInt16, mesh.indexBuffer, NS::UInteger(0), NS::UInteger(6));
+        encoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle,
+                                       NS::UInteger(mesh.indexCount),
+                                       MTL::IndexType::IndexTypeUInt16,
+                                       mesh.indexBuffer,
+                                       NS::UInteger(0),
+                                       NS::UInteger(1));
     } else if (mesh.vertexBuffer) {
         // non-indexed; assume 3 vertices as in triangle
-        encoder->drawPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(3));
+        encoder->drawPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(mesh.vertexCount));
     }
 }
