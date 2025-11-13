@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.metal": "cpp",
         "fstream": "cpp",
         "iostream": "cpp",
         "__bit_reference": "cpp",
@@ -41,6 +42,7 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "vector": "cpp",
-        "algorithm": "cpp"ww
-    }
+        "algorithm": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

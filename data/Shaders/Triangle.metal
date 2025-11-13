@@ -18,7 +18,7 @@ struct VertexPayload {
     half3 color;
 };
 
-VertexPayload vertex vertexMain(uint vertexID [[vertex_id]]) {
+VertexPayload vertex vertexTriangle(uint vertexID [[vertex_id]]) {
     VertexPayload payload;
 
     payload.position = positions[vertexID];
@@ -28,6 +28,6 @@ VertexPayload vertex vertexMain(uint vertexID [[vertex_id]]) {
 };
 
 
-half4 fragment fragmentMain(VertexPayload frag [[stage_in]]){
+half4 fragment fragmentTriangle(VertexPayload frag [[stage_in]]){
     return half4(frag.color, 1.0);
 };
