@@ -22,6 +22,12 @@ void UIElement::buildCachedQuad(float left, float top, float width, float height
     LOG_START("UIElement: buildCachedQuad");
     destroyCachedQuad();
 
+    // Remember size and initial position
+    elementWidth = width;
+    elementHeight = height;
+    cachedLeft = left;
+    cachedTop = top;
+
     quadMesh = MeshFactory::buildScreenQuad(device, left, top, width, height);
     quadShader = new Shader(device, "General", "vertexGeneral", "fragmentGeneral", quadMesh.vertexDescriptor);
     quadMaterial = new Material(quadShader);
@@ -71,11 +77,47 @@ void UIElement::destroyCachedQuad()
     }
     // quadMesh contains retained buffers; Renderable destructor would have released them. To be safe, zero it.
     quadMesh = {};
+    elementWidth = 0.0f;
+    elementHeight = 0.0f;
 }
 
 void UIElement::drawCachedQuad(MTL::RenderCommandEncoder* encoder)
 {
     if (!quadRenderable) return;
+    // Auto-anchor reposition, if enabled
+    if (autoAnchorEnabled && elementWidth > 0.0f && elementHeight > 0.0f)
+    {
+        const float screenWidth = InputState::getWindowWidth();
+        const float screenHeight = InputState::getWindowHeight();
+
+        float left = cachedLeft;
+        float top = cachedTop;
+        switch (anchorCorner)
+        {
+            case AnchorCorner::BottomLeft:
+                left = anchorMarginX;
+                top = anchorMarginY;
+                break;
+            case AnchorCorner::BottomRight:
+                left = screenWidth - elementWidth - anchorMarginX;
+                top = anchorMarginY;
+                break;
+            case AnchorCorner::TopLeft:
+                left = anchorMarginX;
+                top = screenHeight - elementHeight - anchorMarginY;
+                break;
+            case AnchorCorner::TopRight:
+                left = screenWidth - elementWidth - anchorMarginX;
+                top = screenHeight - elementHeight - anchorMarginY;
+                break;
+        }
+        if (left != cachedLeft || top != cachedTop)
+        {
+            moveCachedQuad(left, top, elementWidth, elementHeight);
+            cachedLeft = left;
+            cachedTop = top;
+        }
+    }
     const float screenWidth = InputState::getWindowWidth();
     const float screenHeight = InputState::getWindowHeight();
     // Build an ortho projection mapping 0..screenWidth x 0..screenHeight
@@ -119,4 +161,17 @@ void UIElement::drawPrimitives(MTL::RenderCommandEncoder* encoder)
     for (auto &p : primitives) {
         if (p) p->draw(encoder, ortho);
     }
+}
+
+void UIElement::enableAutoAnchor(AnchorCorner corner, float marginX, float marginY)
+{
+    anchorCorner = corner;
+    anchorMarginX = marginX;
+    anchorMarginY = marginY;
+    autoAnchorEnabled = true;
+}
+
+void UIElement::disableAutoAnchor()
+{
+    autoAnchorEnabled = false;
 }

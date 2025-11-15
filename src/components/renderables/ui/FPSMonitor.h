@@ -1,7 +1,7 @@
 #pragma once
 
 #include "components/renderables/core/UIElement.h"
-#include "components/renderables/primitives/UIPrimitives.h"
+#include "components/renderables/primitives/UIPrimitiveRoundedRectangle.h"
 #include <chrono>
 
 class FPSMonitor : public UIElement {
@@ -11,15 +11,12 @@ public:
     void render(MTL::RenderCommandEncoder *encoder) override;
 
 private:
-    std::chrono::high_resolution_clock::time_point lastTime;
-    int frameCount;
-    int fps;
     // position and size of the monitor quad
-    float posX = 0.0f;
-    float posY = 0.0f;
-    float width = 200.0f;
-    float height = 100.0f;
+    float posX;
+    float posY;
+    float width;
+    float height;
 
     // Example primitive composed within this UIElement
-    std::shared_ptr<RectangleUIPrimitive> demoRect;
+    std::shared_ptr<RoundedRectangleUIPrimitive> demoRectangle;
 };

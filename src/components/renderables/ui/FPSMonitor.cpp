@@ -7,18 +7,32 @@
 #include <cmath>
 
 FPSMonitor::FPSMonitor(MTL::Device *device)
-    : UIElement(device), lastTime(std::chrono::high_resolution_clock::now()), frameCount(0), fps(0)
+    : UIElement(device),
+      width(200.0f),
+            height(100.0f)
 {
     const float windowWidth = InputState::getWindowWidth();
     const float windowHeight = InputState::getWindowHeight();
-    posX = windowWidth - width;
-    posY = windowHeight - height;
-    buildCachedQuad(posX, posY, width, height, {0.0f, 1.0f, 0.0f, 1.0f});
+    // Place at bottom-right with 10px margins; origin is bottom-left
+    const float marginX = 10.0f;
+    const float marginY = 10.0f;
+    posX = windowWidth - width - marginX;
+    posY = marginY;
 
-    // Demo: add a 50x50 red rectangle at the top-left corner of this UI element
-    demoRect = std::make_shared<RectangleUIPrimitive>(device, posX, posY, 50.0f, 50.0f, simd::float4{1.0f, 0.0f, 0.0f, 1.0f});
-    demoRect->setPrimitiveType(MTL::PrimitiveType::PrimitiveTypeTriangle);
-    addPrimitive(demoRect);
+    // Build a rounded rectangle background matching the quad corners
+    // Use a modest radius; tweak per visual preference
+    float radius = 6.0f;
+    demoRectangle = std::make_shared<RoundedRectangleUIPrimitive>(
+        device,
+        posX, posY,
+        width, height,
+        radius,
+        simd::float4{1.0f, 1.0f, 1.0f, 1.0f},
+        4 // segments per corner
+    );
+    addPrimitive(demoRectangle);
+    enableAutoAnchor(AnchorCorner::BottomRight, 10.0f, 10.0f);
+    
 }
 
 FPSMonitor::~FPSMonitor()
@@ -27,25 +41,17 @@ FPSMonitor::~FPSMonitor()
 
 void FPSMonitor::render(MTL::RenderCommandEncoder *encoder)
 {
-    // Update position from InputState (follow the OS cursor with offset)
-    const float windowWidth = InputState::getWindowWidth();
-    const float windowHeight = InputState::getWindowHeight();
-    const float mouseX = static_cast<float>(InputState::getMouseX()) + 12.0f;
-    const float mouseY = static_cast<float>(InputState::getMouseY()) + 12.0f;
-
-    const float desiredX = mouseX;
-    const float desiredY = windowHeight - mouseY - height;
-
-    // Update position only if moved enough to avoid rebuilding every frame
-    posX = desiredX;
-    posY = desiredY;
-    // Move the existing cached quad without recreating shader/material
-    moveCachedQuad(posX, posY, width, height);
-    if (demoRect)
-    {
-        // Keep demo rectangle pinned to the top-left of the monitor
-        demoRect->setPosition(posX, posY);
+    // Keep the rounded rectangle anchored to bottom-right with the same margins
+    const float screenWidth = InputState::getWindowWidth();
+    const float screenHeight = InputState::getWindowHeight();
+    const float marginX = 10.0f;
+    const float marginY = 10.0f;
+    float left = screenWidth - width - marginX;
+    float top = marginY;
+    if (demoRectangle) {
+        demoRectangle->setPosition(left, top);
+        demoRectangle->setSize(width, height);
     }
-
-    drawCachedQuad(encoder);
+    // Draw only primitives (rounded rectangle background)
+    drawPrimitives(encoder);
 }
