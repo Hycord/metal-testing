@@ -19,8 +19,8 @@ struct CircleFactory
     {
     }
 
-    // Returns the x,y point on the circle perimeter for a given vertex index
-    // Index wraps around quality; negative indices are supported
+    
+    
     simd::float2 getPoint(int index) const
     {
         if (quality <= 0)
@@ -30,7 +30,7 @@ struct CircleFactory
 
         int i = index % quality;
         if (i < 0)
-            i += quality; // handle negative indices
+            i += quality; 
 
         float angle = static_cast<float>(i) * deltaAngle;
         float x = std::cos(angle) * radius;

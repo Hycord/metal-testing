@@ -5,7 +5,12 @@
 
 class Shader {
 public:
-    Shader(MTL::Device *device, const std::string &filename, const std::string &vertexEntry, const std::string &fragmentEntry, MTL::VertexDescriptor* vertexDescriptor = nullptr);
+    Shader(MTL::Device *device,
+           const std::string &filename,
+           const std::string &vertexEntry,
+           const std::string &fragmentEntry,
+           MTL::VertexDescriptor* vertexDescriptor = nullptr,
+           bool enableAlphaBlending = false);
     ~Shader();
 
     MTL::RenderPipelineState* pipeline() { return pipelineState; }
@@ -13,4 +18,5 @@ public:
 private:
     MTL::Device *device;
     MTL::RenderPipelineState *pipelineState;
+    bool alphaBlending;
 };

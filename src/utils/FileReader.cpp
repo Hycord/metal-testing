@@ -24,14 +24,14 @@ std::string ReadFile(std::string location)
 
     if (file.is_open())
     {
-        // Read file contents line by line
+        
         std::string line;
         while (std::getline(file, line))
         {
             data += line;
-            data += '\n'; // Add newline character since std::getline strips it
+            data += '\n'; 
         }
-        file.close(); // Close the file after reading
+        file.close(); 
     }
 
     LOG_FINISH("ReadFile %s (size=%zu)", location.c_str(), data.size());

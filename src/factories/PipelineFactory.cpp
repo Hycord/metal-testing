@@ -25,7 +25,15 @@ void PipelineFactory::set_vertex_descriptor(MTL::VertexDescriptor* descriptor) {
     if (this->vertexDescriptor) {
         this->vertexDescriptor->release();
     }
-    this->vertexDescriptor = descriptor->retain();
+    if (descriptor) {
+        this->vertexDescriptor = descriptor->retain();
+    } else {
+        this->vertexDescriptor = nullptr;
+    }
+}
+
+void PipelineFactory::set_alpha_blending(bool enable) {
+    alphaBlending = enable;
 }
 
 MTL::RenderPipelineState* PipelineFactory::build() {
@@ -64,10 +72,20 @@ MTL::RenderPipelineState* PipelineFactory::build() {
         MTL::RenderPipelineDescriptor::alloc()->init();
     pipelineDescriptor->setVertexFunction(vertexMain);
     pipelineDescriptor->setFragmentFunction(fragmentMain);
+    
     pipelineDescriptor->colorAttachments()
                     ->object(0)
-                    ->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB);
-    // enable a depth attachment format so the pipeline can use depth testing
+                    ->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm);
+    if (alphaBlending) {
+        
+        auto colorAttachment = pipelineDescriptor->colorAttachments()->object(0);
+        colorAttachment->setBlendingEnabled(true);
+        colorAttachment->setSourceRGBBlendFactor(MTL::BlendFactor::BlendFactorOne);
+        colorAttachment->setDestinationRGBBlendFactor(MTL::BlendFactor::BlendFactorOneMinusSourceAlpha);
+        colorAttachment->setSourceAlphaBlendFactor(MTL::BlendFactor::BlendFactorOne);
+        colorAttachment->setDestinationAlphaBlendFactor(MTL::BlendFactor::BlendFactorOneMinusSourceAlpha);
+    }
+    
     pipelineDescriptor->setDepthAttachmentPixelFormat(MTL::PixelFormat::PixelFormatDepth32Float);
     
     pipelineDescriptor->setVertexDescriptor(vertexDescriptor);

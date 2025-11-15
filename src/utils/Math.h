@@ -9,6 +9,8 @@ namespace MetalMath
     simd::float4x4 rotateZ(float theta);
     simd::float4x4 scale(float factor);
     simd::float4x4 perspectiveProjection(float fovY, float aspectRatio, float near, float far);
+    simd::float4x4 orthographicProjection(float left, float right, float bottom, float top, float near, float far);
 
     simd::float4x4 cameraView(simd::float3 right, simd::float3 up, simd::float3 forwards, simd::float3 pos);
+    simd::float4x4 lookAt(simd::float3 eye, simd::float3 target, simd::float3 up);
 }

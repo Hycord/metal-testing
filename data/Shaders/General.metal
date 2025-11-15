@@ -5,12 +5,14 @@ struct VertexInput
 {
     float3 position [[attribute(0)]];
     float3 color [[attribute(1)]];
+    float2 uv [[attribute(2)]];
 };
 
 struct VertexOutput
 {
     float4 position [[position]];
     half3 color;
+    float2 uv;
 };
 
 VertexOutput vertex vertexGeneral(
@@ -26,15 +28,29 @@ VertexOutput vertex vertexGeneral(
 
     payload.position = float4(half4x4(projection) * half4x4(view) * half4x4(transform) * half4(pos, 1.0));
     payload.color = half3(input.color);
+    payload.uv = input.uv;
     return payload;
 }
 
-// fragment buffer(0) is reserved for a material color (float4)
-half4 fragment fragmentGeneral(VertexOutput frag [[stage_in]], constant float4 &materialColor [[buffer(0)]])
+
+half4 fragment fragmentGeneral(
+    VertexOutput frag [[stage_in]], 
+    constant float4 &materialColor [[buffer(0)]],
+    texture2d<float> tex [[texture(0)]],
+    sampler samp [[sampler(0)]])
 {
-    // Multiply vertex color by the material color so materials can tint meshes and
-    // screen-space quads. The material's alpha controls the output alpha.
-    half3 col = frag.color * half3(materialColor.xyz);
-    half a = half(materialColor.w);
+    
+    float4 texColor = tex.sample(samp, frag.uv);
+    
+    
+    
+    if (texColor.r == 0.0 && texColor.g == 0.0 && texColor.b == 0.0 && texColor.a == 0.0) {
+        texColor = float4(1.0, 1.0, 1.0, 1.0);
+    }
+    
+    
+    half3 col = frag.color * half3(texColor.rgb) * half3(materialColor.xyz);
+    half a = half(texColor.a * materialColor.w);
+    
     return half4(col, a);
 }

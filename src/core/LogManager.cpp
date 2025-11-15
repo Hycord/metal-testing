@@ -64,9 +64,9 @@ namespace {
 
     const char *tagColor(const char *tag)
     {
-        // Simple mapping for common tags. Fallback to reset.
+        
         if (!tag) return kReset;
-        // Compare a few well-known tags (uppercase assumed)
+        
         if (std::strcmp(tag, "CONSTRUCT") == 0) return kMagenta;
         if (std::strcmp(tag, "DESTROY") == 0) return kRed;
         if (std::strcmp(tag, "START") == 0) return kBlue;
@@ -106,25 +106,25 @@ namespace LogManager
         if (!levelEnabled(level))
             return;
 
-        // Format the message
+        
         va_list args;
         va_start(args, fmt);
 
-        // Format into a string safely
+        
         char buffer[1024];
         vsnprintf(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
-    // Timestamp with milliseconds (thread-safe localtime_r)
+    
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
-    // milliseconds since epoch modulo 1000
+    
     long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
     std::tm tm{};
 #if defined(_POSIX_VERSION) || defined(__APPLE__)
     localtime_r(&t, &tm);
 #else
-    // Fallback (not thread-safe) if localtime_r isn't available
+    
     std::tm *tmp = std::localtime(&t);
     if (tmp) tm = *tmp;
 #endif
@@ -137,7 +137,7 @@ namespace LogManager
     const char *prefixColor = levelPrefix(level);
     const char *name = levelName(level);
 
-    // Default format: [LEVEL] TIMESTAMP - message (with milliseconds)
+    
     std::cout << prefixColor << "[" << name << "] " << kReset << timestr << " - " << buffer << std::endl;
     }
 
@@ -152,7 +152,7 @@ namespace LogManager
         vsnprintf(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
-    // Timestamp with milliseconds (thread-safe localtime_r)
+    
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
@@ -174,11 +174,11 @@ namespace LogManager
         const char *name = levelName(level);
         const char *tcolor = tagColor(tag);
 
-    // Format: [LEVEL] TIMESTAMP [TAG] - message (with milliseconds)
+    
     std::cout << levelC << "[" << name << "] " << kReset
           << timestr << " "
                   << tcolor << "[" << (tag ? tag : "") << "] " << kReset
                   << "- " << buffer << std::endl;
     }
 
-} // namespace LogManager
+} 

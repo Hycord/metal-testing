@@ -18,6 +18,11 @@ public:
     void setPrimitiveType(MTL::PrimitiveType t) { primitiveType = t; }
     MTL::PrimitiveType getPrimitiveType() const { return primitiveType; }
 
+    Material* getMaterial() { return material; }
+    const Material* getMaterial() const { return material; }
+
+    void updateMesh(const Mesh &m);
+
 private:
     Mesh mesh;
     Material *material;

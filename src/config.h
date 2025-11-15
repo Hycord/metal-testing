@@ -15,20 +15,22 @@
 
 #define ENABLE_LOG_ERROR
 #define ENABLE_LOG_INFO
-// #define ENABLE_LOG_DEBUG
+
 
 struct Vertex
 {
     simd::float3 position;
     simd::float3 color;
+    simd::float2 uv;
 };
 
 
 struct Mesh
 {
-    MTL::Buffer *vertexBuffer, *indexBuffer;
-    MTL::VertexDescriptor* vertexDescriptor;
-    // how many vertices/indices to draw
-    size_t vertexCount;
-    size_t indexCount;
+    MTL::Buffer *vertexBuffer = nullptr;
+    MTL::Buffer *indexBuffer = nullptr;
+    MTL::VertexDescriptor* vertexDescriptor = nullptr;
+    
+    size_t vertexCount = 0;
+    size_t indexCount = 0;
 };

@@ -1,4 +1,5 @@
 add_subdirectory(json)
+include_directories(stb)
 include(ExternalProject)
 
 include_directories( ${OPENGL_INCLUDE_DIRS} )

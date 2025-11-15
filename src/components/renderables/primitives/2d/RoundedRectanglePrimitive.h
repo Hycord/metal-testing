@@ -1,20 +1,24 @@
 #pragma once
 
 #include "components/engine/Renderable.h"
-#include "components/renderables/primitives/UIPrimitive.h"
+#include "components/renderables/primitives/RenderablePrimitive.h"
+#include <memory>
 
-// Rounded rectangle primitive positioned by top-left corner in pixel space.
-class RoundedRectangleUIPrimitive : public UIPrimitive {
+
+
+class RoundedRectanglePrimitive : public RenderablePrimitive {
 public:
-    // qualityPerCorner: how many segments to approximate each 90-degree arc (>=1)
-    RoundedRectangleUIPrimitive(MTL::Device* device,
+    
+    RoundedRectanglePrimitive(MTL::Device* device,
                                 float left, float top,
                                 float width, float height,
                                 float radius,
                                 const simd::float4 &col,
                                 int qualityPerCorner = 6);
 
-    void draw(MTL::RenderCommandEncoder* encoder, const simd::float4x4 &ortho) override;
+    void draw(MTL::RenderCommandEncoder* encoder,
+              const simd::float4x4 &projection,
+              const simd::float4x4 &view) override;
 
     void setPosition(float left, float top) { l = left; t = top; dirty = true; }
     void setSize(float w, float h) { width = w; height = h; dirty = true; }
@@ -30,5 +34,7 @@ private:
     int perCorner;
     bool dirty = true;
     Mesh mesh{};
-    std::unique_ptr<Renderable> renderable;
+    std::shared_ptr<Renderable> renderable;
+
+    void onColorChanged() override;
 };

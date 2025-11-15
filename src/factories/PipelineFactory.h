@@ -17,10 +17,13 @@ public:
 
     void set_vertex_descriptor(MTL::VertexDescriptor *descriptor);
 
+    void set_alpha_blending(bool enable);
+
     MTL::RenderPipelineState *build();
 
 private:
     const char *fileName, *vertexEntryPoint, *fragmentEntryPoint;
     MTL::VertexDescriptor *vertexDescriptor = nullptr;
     MTL::Device *device;
+    bool alphaBlending = false;
 };
