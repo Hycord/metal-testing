@@ -69,6 +69,11 @@ public:
         onTransformChanged();
     }
 
+    virtual void getContentSize(float& width, float& height) const {
+        width = 0.0f;
+        height = 0.0f;
+    }
+
 protected:
     RenderablePrimitive() = default;
 

@@ -1,4 +1,5 @@
 #import "GLFWAdapter.h"
+#import <QuartzCore/QuartzCore.h>
 
 NS::Window* get_ns_window(GLFWwindow* glfwWindow, CA::MetalLayer* layer) {
     CALayer* obj_layer = (__bridge CALayer*) layer;

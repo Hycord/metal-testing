@@ -7,3 +7,4 @@
 #include <QuartzCore/CAMetalLayer.hpp>
 
 NS::Window* get_ns_window(GLFWwindow* glfwWindow, CA::MetalLayer* layer);
+void set_display_sync_enabled(CA::MetalLayer* layer, bool enabled);

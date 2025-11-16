@@ -208,12 +208,17 @@ void TextPrimitive::rebuild()
     }
     
     ensureMesh();
+    
+    if (renderable) {
+        renderable->updateMesh(mesh);
+    }
+    
     dirty = false;
 }
 
 void TextPrimitive::ensureMesh()
 {
-    if (!renderable || !font) {
+    if (!renderable && font) {
         
         Shader *shader = new Shader(device, "Text", "vertexText", "fragmentText", mesh.vertexDescriptor);
         Material *material = new Material(shader);
@@ -286,6 +291,36 @@ void TextPrimitive::measureText(float& width, float& height) const
     } else {
         width = 0;
         height = 0;
+    }
+}
+
+void TextPrimitive::getContentSize(float& width, float& height) const
+{
+    if (!font) {
+        width = 0.0f;
+        height = 0.0f;
+        return;
+    }
+
+    if (wrapEnabled && hasBoxSize) {
+        auto lines = const_cast<TextPrimitive*>(this)->wrapText(text, boxWidth);
+        float maxLineWidth = 0.0f;
+        for (const auto& line : lines) {
+            float lineWidth = 0.0f;
+            for (char c : line) {
+                const BakedGlyph* glyph = font->getGlyph(c);
+                if (glyph) {
+                    lineWidth += glyph->xadvance;
+                }
+            }
+            if (lineWidth > maxLineWidth) {
+                maxLineWidth = lineWidth;
+            }
+        }
+        width = maxLineWidth;
+        height = lines.size() * font->getLineHeight();
+    } else {
+        measureText(width, height);
     }
 }
 

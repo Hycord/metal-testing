@@ -3,7 +3,7 @@
 #include "components/engine/Material.h"
 #include "components/engine/Renderable.h"
 #include "components/engine/Shader.h"
-#include "components/renderables/ui/FPSMonitor.h"
+#include "components/renderables/ui/DebugMonitor.h"
 #include "core/LogManager.h"
 #include "factories/MeshFactory.h"
 #include "systems/MeshRenderer.h"
@@ -17,11 +17,11 @@ Application::Application()
     config.nearPlane = 0.1f;
     config.farPlane = 400.0f;
     config.orthographicHeight = 60.0f;
-    config.cursorMode = CursorMode::Normal;
+    config.cursorMode = CursorMode::Disabled;
     config.exitOnEscape = true;
 
     config.defaultProjection = ProjectionType::Perspective;
-    config.enableDefaultCameraController = false;
+    config.enableDefaultCameraController = true;
     config.cameraPosition = {0.0f, -6.0f, 3.0f};
     config.cameraYawDegrees = 90.0f;
     config.cameraPitchDegrees = -25.0f;
@@ -40,8 +40,8 @@ Application::Application()
     cubeRenderable = std::make_shared<Renderable>(cubeMesh, material);
     engine->addRenderable(cubeRenderable);
 
-    fpsMonitor = std::make_shared<FPSMonitor>(device);
-    engine->registerUIElement(fpsMonitor);
+    debugMonitor = std::make_shared<DebugMonitor>(device);
+    engine->registerUIElement(debugMonitor);
 
     engine->usePerspective(config.perspectiveFovY, config.nearPlane, config.farPlane);
 }

@@ -83,7 +83,16 @@ void RectanglePrimitive::ensureMesh()
     }
 
     
-    renderable = makeRenderable(device, mesh, color, getPrimitiveType());
+    if (!renderable) {
+        renderable = makeRenderable(device, mesh, color, getPrimitiveType());
+    } else {
+        
+        renderable->updateMesh(mesh);
+        if (auto material = renderable->getMaterial()) {
+            material->setColor(color);
+        }
+        renderable->setPrimitiveType(getPrimitiveType());
+    }
     dirty = false;
 }
 

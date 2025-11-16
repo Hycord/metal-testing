@@ -72,7 +72,15 @@ void CirclePrimitive::rebuild()
     mesh.vertexDescriptor = vertexDescriptor;
 
     
-    renderable = makeRenderable(device, mesh, color, getPrimitiveType());
+    if (!renderable) {
+        renderable = makeRenderable(device, mesh, color, getPrimitiveType());
+    } else {
+        
+        renderable->updateMesh(mesh);
+        if (auto material = renderable->getMaterial()) {
+            material->setColor(color);
+        }
+    }
     dirty = false;
 }
 

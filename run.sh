@@ -115,10 +115,12 @@ main() {
     
     local build_only=false
     local args=()
+    local enable_debug_logs=false
     
     while [ $# -gt 0 ]; do
         case "$1" in
             -v|--verbose) VERBOSE=true; shift ;;
+            -d|--debug) enable_debug_logs=true; shift ;;
             --disable-log-debug-build)
                 EXTRA_CXX_FLAGS="$EXTRA_CXX_FLAGS -DDISABLE_LOG_DEBUG"
                 shift ;;
@@ -143,6 +145,12 @@ main() {
         esac
     done
     
+    # Enable debug logging flags if requested
+    if [ "$enable_debug_logs" = true ]; then
+        EXTRA_CXX_FLAGS="$EXTRA_CXX_FLAGS -DENABLE_LOG_DEBUG -DENABLE_LOG_INFO -DENABLE_LOG_ERROR"
+        log "Debug logging enabled"
+    fi
+    
     check_tools
     
     log "Starting build"
@@ -157,11 +165,12 @@ main() {
 
 show_help() {
     cat << EOF
-Usage: $0 [-b] [-v] [args...]
+Usage: $0 [-b] [-v] [-d] [args...]
 
 Options:
   -b, --build    Build only (don't run)
   -v, --verbose  Show all build steps
+  -d, --debug    Enable debug logging (DEBUG, INFO, ERROR logs)
   -h, --help     This help
 
 Builds every time, copies data, runs with arguments.

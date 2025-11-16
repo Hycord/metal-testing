@@ -10,6 +10,7 @@
 UIElement::UIElement(MTL::Device* device)
     : device(device), quadShader(nullptr), quadMaterial(nullptr), quadRenderable(nullptr)
 {
+    transform.setSize(0.0f, 0.0f);
 }
 
 UIElement::~UIElement()
@@ -22,11 +23,12 @@ void UIElement::buildCachedQuad(float left, float top, float width, float height
     LOG_START("UIElement: buildCachedQuad");
     destroyCachedQuad();
 
-    
-    elementWidth = width;
-    elementHeight = height;
+    transform.setSize(width, height);
+    transform.setPosition(left, top);
     cachedLeft = left;
     cachedTop = top;
+    elementWidth = width;
+    elementHeight = height;
 
     quadMesh = MeshFactory::buildScreenQuad(device, left, top, width, height);
     quadShader = new Shader(device, "General", "vertexGeneral", "fragmentGeneral", quadMesh.vertexDescriptor);
@@ -42,8 +44,8 @@ void UIElement::moveCachedQuad(float left, float top, float width, float height)
 {
     
     
-    if (!quadMesh.vertexBuffer) {
-        buildCachedQuad(left, top, width, height, simd::float4{1.0f,1.0f,1.0f,1.0f});
+    if (!quadMesh.vertexBuffer || !quadRenderable) {
+        LOG_ERROR("UIElement::moveCachedQuad called without valid quad - call buildCachedQuad first");
         return;
     }
 
@@ -86,6 +88,7 @@ void UIElement::destroyCachedQuad()
     }
     
     quadMesh = {};
+    transform.setSize(0.0f, 0.0f);
     elementWidth = 0.0f;
     elementHeight = 0.0f;
 }
@@ -144,7 +147,7 @@ void UIElement::drawCachedQuad(MTL::RenderCommandEncoder* encoder)
     drawPrimitives(encoder);
 }
 
-void UIElement::addPrimitive(const std::shared_ptr<UIPrimitive>& prim)
+void UIElement::addPrimitive(const std::shared_ptr<RenderablePrimitive>& prim)
 {
     primitives.push_back(prim);
 }
@@ -178,9 +181,70 @@ void UIElement::enableAutoAnchor(AnchorCorner corner, float marginX, float margi
     anchorMarginX = marginX;
     anchorMarginY = marginY;
     autoAnchorEnabled = true;
+    
+    AnchorPoint point;
+    switch (corner) {
+        case AnchorCorner::BottomLeft:
+            point = AnchorPoint::BottomLeft;
+            break;
+        case AnchorCorner::BottomRight:
+            point = AnchorPoint::BottomRight;
+            break;
+        case AnchorCorner::TopLeft:
+            point = AnchorPoint::TopLeft;
+            break;
+        case AnchorCorner::TopRight:
+            point = AnchorPoint::TopRight;
+            break;
+    }
+    
+    transform.setAnchor(AnchorTarget::Screen, point, marginX, marginY);
 }
 
 void UIElement::disableAutoAnchor()
 {
     autoAnchorEnabled = false;
+    transform.clearAnchor();
+}
+
+void UIElement::updateSizeFromPrimitives()
+{
+    float maxWidth = 0.0f;
+    float maxHeight = 0.0f;
+    
+    for (const auto& prim : primitives) {
+        if (!prim) continue;
+        
+        float primWidth, primHeight;
+        prim->getContentSize(primWidth, primHeight);
+        
+        if (primWidth > maxWidth) maxWidth = primWidth;
+        if (primHeight > maxHeight) maxHeight = primHeight;
+    }
+    
+    if (maxWidth > 0.0f && maxHeight > 0.0f) {
+        elementWidth = maxWidth;
+        elementHeight = maxHeight;
+        transform.setSize(maxWidth, maxHeight);
+        
+        if (quadMesh.vertexBuffer && quadRenderable) {
+            moveCachedQuad(cachedLeft, cachedTop, maxWidth, maxHeight);
+        }
+    }
+}
+
+void UIElement::getContentSize(float& width, float& height) const
+{
+    width = 0.0f;
+    height = 0.0f;
+    
+    for (const auto& prim : primitives) {
+        if (!prim) continue;
+        
+        float primWidth, primHeight;
+        prim->getContentSize(primWidth, primHeight);
+        
+        if (primWidth > width) width = primWidth;
+        if (primHeight > height) height = primHeight;
+    }
 }

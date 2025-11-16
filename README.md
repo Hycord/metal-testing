@@ -1,40 +1,65 @@
 # Metal Renderer Template
 
-A small, minimal template C++ renderer project configured for Apple Metal on macOS.
+A C++20 Metal-based 3D renderer template for macOS with a component-based architecture. Use this as a starting point for building applications that need Metal rendering capabilities.
 
-Use this repository as a starting point for future Metal-based projects. It contains a minimal CMake-based build, example shader and source layout, and a small runtime wrapper to get a Metal rendering loop up and running quickly.
+## Overview
 
-## Goals
+This template provides a complete rendering framework with:
+- **Component-based architecture**: Renderable primitives, materials, shaders, and meshes
+- **Metal-cpp bindings**: Modern C++ wrapper for Metal API (no Objective-C required)
+- **Built-in primitives**: Text, circles, rectangles, rounded rectangles, and custom meshes
+- **Camera system**: WASD + mouse look controller with perspective/orthographic projection
+- **Asset pipeline**: Automatic shader compilation, font loading, and texture management
+- **CMake build system**: Simple configuration for macOS arm64/x86_64
 
-- Provide a lightweight, reusable starting point for Metal experiments and demos.
-- Keep the build simple (CMake) and macOS-friendly (Xcode/CMake workflows supported).
-- Include a clear project layout and basic examples for shaders, rendering, and view/controller glue.
+## Key Features
 
-## Features
-
-- Cross-compile with CMake for command-line build or Xcode.
-- Small sample renderer with Metal shaders located in `data/Shaders/`.
-- Simple file layout in `src/` for view, controller, math, and utilities.
+- **Engine + Application pattern**: Separation of rendering loop from application logic
+- **Flexible rendering**: Both 3D world-space and 2D screen-space rendering
+- **Text rendering**: Built-in support via stb_truetype with font atlas generation
+- **Material system**: Shader + color + texture + sampler binding
+- **Procedural mesh generation**: Factories for common shapes (cubes, quads, screen-space UI)
+- **IO Channel**: Key-value store for inter-system communication
+- **Compile-time logging**: Zero-cost abstractions when disabled
 
 ## Prerequisites
 
-- macOS (recent, supporting Metal)
-- Xcode (for Metal SDK & toolchain)
-- Command line tools (clang, make)
-- CMake (>= 3.15 recommended)
+- macOS (supporting Metal - macOS 10.15+)
+- Xcode Command Line Tools (for Metal SDK & clang toolchain)
+- CMake (>= 3.15)
 
-Install common tools via Homebrew (optional):
+Install CMake via Homebrew if needed:
 
 ```bash
-# install cmake if you don't have it
 brew install cmake
 ```
 
+## Quick Start
+
+The fastest way to get started is with the included `run.sh` script:
+
+```bash
+# Build & run (Debug mode, arm64)
+./run.sh
+
+# Build only (skip running)
+./run.sh -b
+
+# Verbose output
+./run.sh -v
+```
+
+This automatically:
+1. Configures CMake for your architecture
+2. Copies `data/` (shaders, fonts, config) into `build/`
+3. Builds the application
+4. Runs the executable
+
+**Important**: Always copy `data/` to `build/` or the app won't find runtime assets!
+
 ## Build (command-line)
 
-There are two recommended ways to build this template: the included `run.sh` helper (recommended) or a manual CMake workflow.
-
-1) Quick (recommended): use the `run.sh` helper script
+### Option 1: Using run.sh (Recommended)
 
 ```bash
 # Build & run (default: Debug, copies `data/` into `build/`)
@@ -47,80 +72,221 @@ There are two recommended ways to build this template: the included `run.sh` hel
 ./run.sh -v
 ```
 
-`run.sh` will configure CMake (sets a macOS architecture and Debug build type by default), copy `data/` into `build/`, build with `make` or `ninja` (if available), and then run the produced `application` binary.
-
-2) Manual CMake (more control)
-
-From the repository root do a separate configure and build step. This example sets the macOS architecture and a Release build:
+### Option 2: Manual CMake
 
 ```bash
 mkdir -p build && cd build
-# configure (set architecture and build type explicitly)
-cmake -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Release ..
 
-# build (uses CMake's --build wrapper; pass extra args to the underlying builder)
-cmake --build . --config Release -- -j$(sysctl -n hw.ncpu)
+# Configure for arm64 Debug build
+cmake -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Debug ..
+
+# Build with parallel jobs
+cmake --build . -- -j$(sysctl -n hw.ncpu)
+
+# Don't forget to copy runtime assets!
+cp -r ../data .
+
+# Run
+./application
 ```
 
-This will produce the `application` executable in `build/` (see the generated `Makefile` and CMake cache in `build/`).
-
-To generate an Xcode project instead of a Makefile/ninja build:
+### Option 3: Xcode Project
 
 ```bash
 cmake -S . -B build -G Xcode
-open build
+open build/renderer.xcodeproj
 ```
-
-## Run
-
-There is a small helper script `run.sh` in the repository root that runs the built application. From the repo root:
-
-```bash
-./run.sh
-```
-
-Or run the executable directly from `build/application`.
 
 ## Logging (compile-time)
 
-This project includes a small LogManager with three levels: INFO, DEBUG and ERROR.
-By default logging is OFF at compile-time to avoid runtime cost and to keep binaries small.
+Logging is **disabled by default** to avoid runtime cost. Enable specific log levels via preprocessor definitions:
 
-To enable one or more logging levels, pass a preprocessor definition when configuring/building.
-Examples below show how to enable DEBUG logs; replace with `ENABLE_LOG_INFO` or `ENABLE_LOG_ERROR` as needed.
+### Available Log Levels
 
-Using CMake directly:
+- `ENABLE_LOG_INFO` - General information messages
+- `ENABLE_LOG_DEBUG` - Detailed debugging output
+- `ENABLE_LOG_ERROR` - Error messages
+- Plus: `LOG_CONSTRUCT()`, `LOG_DESTROY()`, `LOG_START()`, `LOG_FINISH()`, `LOG_STEP()`
+
+### Enable Logging
+
+Using CMake:
 
 ```bash
-# create a build directory and configure with extra CXX flags that define the macro
 mkdir -p build && cd build
-cmake -DCMAKE_CXX_FLAGS="-DENABLE_LOG_DEBUG" -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DCMAKE_CXX_FLAGS="-DENABLE_LOG_DEBUG" ..
 cmake --build . -- -j$(sysctl -n hw.ncpu)
 ```
 
-Or with the included `run.sh` helper you can add the CXX flag via the `EXTRA_CXX_FLAGS` environment variable:
+Using run.sh:
 
 ```bash
 EXTRA_CXX_FLAGS="-DENABLE_LOG_DEBUG -DENABLE_LOG_INFO" ./run.sh -v
 ```
 
-Notes:
-- When a logging level is not enabled at compile-time its calls are compiled away (no runtime cost).
-- When enabled, you can still toggle each level at runtime through `LogManager::setEnabled(...)` if you want finer control.
+**Note**: When disabled at compile-time, log calls are completely removed (zero runtime cost).
+## Architecture
 
+### Core Components
 
-## Project layout
+```
+Application → Engine → MeshRenderer
+    ↓           ↓           ↓
+Renderables  Camera   Metal Device/Layer
+```
 
-- `CMakeLists.txt` — top-level CMake configuration
-- `run.sh` — small runner script
-- `data/` — runtime assets and Metal shaders
-  - `Shaders/` — Metal shader files (`*.metal`)
-- `deps/` — third-party headers and helper include files
-- `src/` — application source
-  - `main.cpp` — platform/application entry
-  - `lib/` — modules: `FileReader`, `LogManager`, `MetalDelegates`, `View`, `Utils` etc.
+- **Engine** (`src/engine/Engine.h`): Main rendering loop orchestrator. Manages window, Metal device/layer, camera, and frame lifecycle.
+- **Application** (`src/controller/Application.h`): User-facing entry point. Create your custom application logic here.
+- **MeshRenderer** (`src/systems/MeshRenderer.h`): Low-level Metal rendering system. Handles command buffers, render passes, and drawing.
 
-Example important files in `src/`:
-- `src/main.cpp` — bootstraps the application and Metal view
-- `src/lib/MetalDelegates/` — app & view delegate glue
-- `src/lib/View/Renderer.cpp` — renderer implementation
+### Renderable System
+
+- **Renderable** (`src/components/engine/Renderable.h`): Wraps a Mesh + Material + transform matrix
+- **RenderablePrimitive**: Base class for higher-level primitives (text, shapes)
+- **Built-in Primitives**: 
+  - `TextPrimitive` - TrueType font rendering with atlas
+  - `CirclePrimitive`, `RectanglePrimitive`, `RoundedRectanglePrimitive` - 2D shapes
+  - Custom meshes via `MeshFactory`
+
+### Material & Shader System
+
+- **Shader** (`src/components/engine/Shader.h`): Loads `.metal` files from `data/Shaders/`, compiles pipeline state
+- **Material** (`src/components/engine/Material.h`): Binds shader, color, texture, and sampler
+- **Shader Convention**: 
+  - Vertex: `transform` (buffer 1), `projection` (buffer 2), `view` (buffer 3)
+  - Fragment: `materialColor` (buffer 0)
+
+## Project Layout
+
+```
+renderer/
+├── CMakeLists.txt          # Build configuration
+├── run.sh                  # Build & run helper script
+├── data/                   # Runtime assets (copied to build/)
+│   ├── Shaders/            # Metal shader files (*.metal)
+│   │   ├── General.metal   # Standard 3D shader
+│   │   ├── Text.metal      # Text rendering shader
+│   │   └── Triangle.metal  # Example primitive shader
+│   ├── fonts/              # TrueType fonts for text rendering
+│   └── config.json         # Application configuration
+├── deps/                   # Third-party dependencies
+│   ├── Apple/              # Metal-cpp C++ bindings
+│   ├── glfw/               # Windowing library
+│   ├── json/               # nlohmann/json
+│   └── stb/                # stb_truetype, stb_image
+└── src/                    # Application source code
+    ├── main.cpp            # Entry point
+    ├── config.h            # Global types (Vertex, Mesh)
+    ├── engine/             # Engine core (Engine, EngineIO)
+    ├── controller/         # Application logic
+    ├── systems/            # MeshRenderer, PipelineFactory
+    ├── components/         # Renderables, Materials, Shaders
+    │   ├── engine/         # Core components
+    │   └── renderables/    # Primitive implementations
+    ├── factories/          # MeshFactory, FontManager
+    ├── backend/            # GLFW adapter (GLFWAdapter.mm)
+    └── utils/              # Logging, file utilities
+```
+
+## Using This Template
+
+### 1. Create a Custom Application
+
+Edit `src/controller/Application.cpp` or create your own:
+
+```cpp
+#include "engine/Engine.h"
+
+class MyApp {
+public:
+    void setup(Engine* engine) {
+        // Register renderables, set up scene
+        auto cube = std::make_shared<Renderable>(
+            MeshFactory::buildCube(engine->getDevice(), 2.0f),
+            std::make_shared<Material>(
+                std::make_shared<Shader>("General", engine->getDevice()),
+                simd::make_float4(1, 0, 0, 1)
+            )
+        );
+        engine->addRenderable(cube);
+    }
+    
+    void onFrame(const FrameContext& ctx) {
+        // Per-frame logic
+    }
+};
+```
+
+### 2. Add Custom Shaders
+
+Create `data/Shaders/MyShader.metal`:
+
+```metal
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexIn {
+    float3 position [[attribute(0)]];
+};
+
+vertex float4 vertex_main(
+    VertexIn in [[stage_in]],
+    constant float4x4& transform [[buffer(1)]],
+    constant float4x4& projection [[buffer(2)]],
+    constant float4x4& view [[buffer(3)]]
+) {
+    return projection * view * transform * float4(in.position, 1.0);
+}
+
+fragment float4 fragment_main(constant float4& color [[buffer(0)]]) {
+    return color;
+}
+```
+
+### 3. Create Custom Renderables
+
+Subclass `RenderablePrimitive` or use `Renderable` directly:
+
+```cpp
+auto mesh = MeshFactory::buildQuad(device, width, height);
+auto shader = std::make_shared<Shader>("MyShader", device);
+auto material = std::make_shared<Material>(shader, float4{1, 1, 1, 1});
+auto renderable = std::make_shared<Renderable>(mesh, material);
+```
+
+### 4. Text Rendering
+
+```cpp
+auto font = FontManager::getInstance().getFont("data/fonts/Roboto/Roboto-Regular.ttf", 48);
+auto text = std::make_shared<TextPrimitive>(
+    "Hello World", 
+    device, 
+    font, 
+    simd::make_float3(100, 100, 0)  // Screen position
+);
+engine->registerUIElement(text);
+```
+
+## Common Pitfalls
+
+1. **Missing data/ folder**: Shaders/fonts won't load. Always use `./run.sh` or manually copy `data/` to `build/`
+2. **Private implementation defines**: If you get linker errors, ensure your main file has these before Metal includes:
+   ```cpp
+   #define NS_PRIVATE_IMPLEMENTATION
+   #define MTL_PRIVATE_IMPLEMENTATION
+   #define MTK_PRIVATE_IMPLEMENTATION
+   #define CA_PRIVATE_IMPLEMENTATION
+   ```
+3. **Screen-space coordinates**: Use `MeshFactory::buildScreenQuad()` for UI elements in normalized device coordinates [-1, 1]
+4. **Camera projection**: Switch with `engine->usePerspective()` or `engine->useOrthographic()`
+
+## Dependencies
+
+- **Metal-cpp**: C++ bindings for Metal API (included in `deps/Apple/`)
+- **GLFW**: Cross-platform windowing and input (submodule)
+- **stb_truetype**: Font loading and rendering
+- **nlohmann/json**: JSON configuration parsing
+
+## License
+
+This template is provided as-is for use in your own projects. Modify and extend as needed.

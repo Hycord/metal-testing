@@ -7,7 +7,7 @@
 
 class Engine;
 class Renderable;
-class FPSMonitor;
+class DebugMonitor;
 class RenderableTextPrimitive;
 
 class Application
@@ -21,7 +21,7 @@ public:
 private:
     std::unique_ptr<Engine> engine;
     std::shared_ptr<Renderable> cubeRenderable;
-    std::shared_ptr<FPSMonitor> fpsMonitor;
+    std::shared_ptr<DebugMonitor> debugMonitor;
     std::shared_ptr<RenderableTextPrimitive> worldText;
 
     float cubeRotationDegrees = 0.0f;

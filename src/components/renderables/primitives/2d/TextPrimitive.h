@@ -59,6 +59,8 @@ public:
     
     void measureText(float& width, float& height) const;
 
+    void getContentSize(float& width, float& height) const override;
+
 private:
     void rebuild();
     void ensureMesh();
